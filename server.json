@@ -1,0 +1,21 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+	"name": "com.litescrape/litescrape-mcp-server",
+	"description": "Google Search, Bing, DuckDuckGo and Google Maps results free without an API key; Google AI Mode, AI Overview and Shopping with one.",
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "litescrape-mcp-server",
+			"version": "0.1.0",
+			"environmentVariables": [
+				{
+					"name": "LITESCRAPE_API_KEY",
+					"description": "Optional Litescrape API key. Without it, google_search, bing_search, google_maps and duckduckgo_search work from a free daily allowance; with it every tool is available.",
+					"isRequired": false,
+					"isSecret": true
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,51 @@
+# Publishes litescrape-mcp-server to npm on every version tag push (0.1.0, 1.2.3, ...).
+#
+# Authentication, one of:
+#   A) OIDC trusted publishing (recommended): on npmjs.com, package settings ->
+#      Trusted Publishers -> GitHub Actions, repository litescrape/litescrape-mcp-server,
+#      workflow publish.yml. Leave NPM_TOKEN unset.
+#   B) An npm granular access token stored as the NPM_TOKEN repository secret.
+#
+# Release: bump "version" in package.json and CHANGELOG.md, commit, then
+#   git tag <version> && git push origin main --tags
+
+name: Publish
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the tag matches package.json
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          [ "$PKG_VERSION" = "${GITHUB_REF_NAME}" ] || { echo "package.json is $PKG_VERSION but the tag is ${GITHUB_REF_NAME}"; exit 1; }
+
+      - name: Publish
+        run: |
+          [ -n "$NPM_TOKEN" ] && npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
+          npm publish --provenance --access public
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

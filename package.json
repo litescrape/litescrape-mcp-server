@@ -1,0 +1,75 @@
+{
+	"name": "litescrape-mcp-server",
+	"version": "0.1.0",
+	"description": "MCP server for the Litescrape API: Google Search, Bing, DuckDuckGo and Google Maps free without an API key, plus Google AI Mode, AI Overview and Shopping with one",
+	"license": "MIT",
+	"homepage": "https://litescrape.com",
+	"mcpName": "com.litescrape/litescrape-mcp-server",
+	"type": "module",
+	"bin": {
+		"litescrape-mcp-server": "dist/index.js"
+	},
+	"main": "dist/server.js",
+	"types": "dist/server.d.ts",
+	"files": [
+		"dist",
+		"server.json"
+	],
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"mcp",
+		"mcp-server",
+		"model context protocol",
+		"litescrape",
+		"serp api",
+		"google search",
+		"google maps",
+		"bing search",
+		"duckduckgo",
+		"google ai mode",
+		"google ai overview",
+		"google shopping",
+		"web search",
+		"claude",
+		"cursor"
+	],
+	"author": {
+		"name": "Litescraper",
+		"email": "support@litescrape.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/litescrape/litescrape-mcp-server.git"
+	},
+	"bugs": {
+		"url": "https://github.com/litescrape/litescrape-mcp-server/issues"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.build.json",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"lint": "npm run format:check && npm run typecheck",
+		"dev": "tsx src/index.ts",
+		"inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
+		"prepublishOnly": "npm run lint && npm run test && npm run build"
+	},
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.30.0",
+		"zod": "^3.25.76"
+	},
+	"devDependencies": {
+		"@types/node": "^24.0.0",
+		"prettier": "3.8.3",
+		"tsx": "^4.23.13",
+		"typescript": "^5.9.3",
+		"vitest": "^4.1.5"
+	}
+}
