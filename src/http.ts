@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
 import {
 	createServer as createNodeServer,
 	type IncomingMessage,
@@ -17,6 +18,12 @@ export const HEALTH_PATH = '/healthz';
 // shared secret, and only when it holds exactly one address.
 export const FORWARDED_IP_HEADER = 'X-Litescrape-Keyless-Ip';
 export const PROXY_SECRET_HEADER = 'X-Litescrape-Keyless-Secret';
+// Behind Cloudflare the socket peer is one of its egress addresses and
+// X-Forwarded-For is a chain, so the caller is CF-Connecting-IP; a transform
+// rule on the zone adds the edge secret, which is how a request proves it came
+// through Cloudflare rather than straight to the origin with forged headers.
+export const EDGE_SECRET_HEADER = 'x-litescrape-edge-secret';
+export const EDGE_CLIENT_HEADER = 'cf-connecting-ip';
 
 export interface HttpOptions {
 	/**
@@ -25,6 +32,12 @@ export interface HttpOptions {
 	 * caller rather than to this server's own address.
 	 */
 	proxySecret?: string;
+	/**
+	 * Secret Cloudflare adds to every request it relays. When set, the caller is
+	 * read from CF-Connecting-IP on requests that carry it, and nothing is
+	 * forwarded for requests that bypassed Cloudflare.
+	 */
+	edgeSecret?: string;
 	apiUrl?: string;
 	timeoutMs?: number;
 	fetch?: ClientOptions['fetch'];
@@ -44,21 +57,41 @@ export function bearerToken(req: IncomingMessage): string | undefined {
 	return fromQuery || undefined;
 }
 
+function headerValue(req: IncomingMessage, name: string): string {
+	const raw = req.headers[name];
+	return (Array.isArray(raw) ? raw.join(', ') : raw)?.trim() ?? '';
+}
+
+function sameSecret(presented: string, expected: string): boolean {
+	const digest = (value: string) => createHash('sha256').update(value).digest();
+	return timingSafeEqual(digest(presented), digest(expected));
+}
+
 /**
- * The caller as the ingress reports it. X-Forwarded-For is passed through
- * unchanged: the API meters it only when it holds exactly one address, so a
- * crafted multi-hop value is refused there instead of being trusted here.
+ * The caller as the ingress reports it. With an edge secret configured, only a
+ * request carrying it is known to have come through Cloudflare, and its caller
+ * is CF-Connecting-IP; a request that bypassed Cloudflare gets no caller at all.
+ * Without one, X-Forwarded-For is passed through unchanged: the API meters it
+ * only when it holds exactly one address, so a crafted multi-hop value is
+ * refused there instead of being trusted here.
  */
-export function callerAddress(req: IncomingMessage): string | undefined {
-	const forwarded = req.headers['x-forwarded-for'];
-	const value = (Array.isArray(forwarded) ? forwarded.join(', ') : forwarded)?.trim();
-	if (value) return value;
+export function callerAddress(
+	req: IncomingMessage,
+	options: Pick<HttpOptions, 'edgeSecret'> = {},
+): string | undefined {
+	if (options.edgeSecret) {
+		const presented = headerValue(req, EDGE_SECRET_HEADER);
+		if (!presented || !sameSecret(presented, options.edgeSecret)) return undefined;
+		return headerValue(req, EDGE_CLIENT_HEADER) || undefined;
+	}
+	const forwarded = headerValue(req, 'x-forwarded-for');
+	if (forwarded) return forwarded;
 	return req.socket?.remoteAddress || undefined;
 }
 
 export function clientForRequest(req: IncomingMessage, options: HttpOptions): LitescrapeClient {
 	const headers: Record<string, string> = {};
-	const caller = options.proxySecret ? callerAddress(req) : undefined;
+	const caller = options.proxySecret ? callerAddress(req, options) : undefined;
 	if (options.proxySecret && caller) {
 		headers[FORWARDED_IP_HEADER] = caller;
 		headers[PROXY_SECRET_HEADER] = options.proxySecret;

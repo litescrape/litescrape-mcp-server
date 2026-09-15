@@ -141,7 +141,7 @@ Requests time out after 120 seconds by default (the API's own deadline is 90 sec
 
 `litescrape-mcp-server --http` (or `LITESCRAPE_MCP_TRANSPORT=http`) serves MCP over HTTP instead of stdio: stateless `POST /mcp`, `GET /healthz`, listening on `PORT` (default 8080) and `HOST` (default `0.0.0.0`), or `--port` and `--host`. Each request's API key comes from its `Authorization: Bearer` header or `?api_key=` query parameter, so one process serves keyed and keyless callers; `LITESCRAPE_API_KEY` is ignored in this mode. This is what runs at `https://mcp.litescrape.com/mcp`.
 
-Behind a shared address, keyless callers would all count against one allowance. `LITESCRAPE_KEYLESS_PROXY_SECRET` is the secret the Litescrape API shares with its own hosted endpoint for forwarding each caller's address; it is not needed for a private deployment, where the server's own address is metered.
+Behind a shared address, keyless callers would all count against one allowance. `LITESCRAPE_KEYLESS_PROXY_SECRET` is the secret the Litescrape API shares with its own hosted endpoint for forwarding each caller's address, and `LITESCRAPE_EDGE_SECRET` is the value Cloudflare adds in front of that endpoint so the caller can be read from `CF-Connecting-IP`. Neither is needed for a private deployment, where the server's own address is metered.
 
 ```
 docker build -t litescrape-mcp-server . && docker run -p 8080:8080 litescrape-mcp-server --http

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.1] - 2026-09-15
+
+### Changed
+
+- HTTP mode behind Cloudflare: with `LITESCRAPE_EDGE_SECRET` set, the caller
+  forwarded to the API is `CF-Connecting-IP` from requests that carry the
+  secret Cloudflare's transform rule adds, and nothing is forwarded for a
+  request that reached the server directly. Without the variable, behaviour
+  is unchanged. This is what `mcp.litescrape.com` runs.
+
 ## [0.2.0] - 2026-09-15
 
 ### Added

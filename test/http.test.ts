@@ -19,7 +19,7 @@ afterEach(async () => {
 	);
 });
 
-async function listening(options: { proxySecret?: string } = {}) {
+async function listening(options: { proxySecret?: string; edgeSecret?: string } = {}) {
 	const recorded: Recorded[] = [];
 	const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
 		recorded.push({
@@ -104,6 +104,39 @@ describe('Streamable HTTP mode', () => {
 			await client.close();
 		}
 		expect(recorded[0]?.headers[FORWARDED_IP_HEADER]).toBe('203.0.113.7, 10.0.0.1');
+	});
+
+	it('reads the caller from CF-Connecting-IP only under the edge secret', async () => {
+		const { origin, recorded } = await listening({ proxySecret: 'shh', edgeSecret: 'edge' });
+		const relayed = await connect(`${origin}/mcp`, {
+			'X-Litescrape-Edge-Secret': 'edge',
+			'CF-Connecting-IP': '203.0.113.9',
+			'X-Forwarded-For': '172.70.1.1, 203.0.113.9',
+		});
+		try {
+			await relayed.callTool({ name: 'bing_search', arguments: { q: 'x' } });
+		} finally {
+			await relayed.close();
+		}
+		expect(recorded[0]?.headers[FORWARDED_IP_HEADER]).toBe('203.0.113.9');
+		expect(recorded[0]?.headers[PROXY_SECRET_HEADER]).toBe('shh');
+
+		const bypassing: Record<string, string>[] = [
+			{ 'CF-Connecting-IP': '203.0.113.9', 'X-Forwarded-For': '203.0.113.9' },
+			{ 'X-Litescrape-Edge-Secret': 'wrong', 'CF-Connecting-IP': '203.0.113.9' },
+		];
+		for (const headers of bypassing) {
+			const direct = await connect(`${origin}/mcp`, headers);
+			try {
+				await direct.callTool({ name: 'bing_search', arguments: { q: 'x' } });
+			} finally {
+				await direct.close();
+			}
+		}
+		expect(recorded).toHaveLength(3);
+		expect(recorded[1]?.headers[FORWARDED_IP_HEADER]).toBeUndefined();
+		expect(recorded[1]?.headers[PROXY_SECRET_HEADER]).toBeUndefined();
+		expect(recorded[2]?.headers[FORWARDED_IP_HEADER]).toBeUndefined();
 	});
 
 	it('forwards nothing about the caller when no secret is configured', async () => {

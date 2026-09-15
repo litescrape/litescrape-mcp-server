@@ -25,13 +25,21 @@ function http(args: string[]): void {
 	const port = Number(flag(args, '--port') ?? process.env.PORT ?? 8080);
 	const host = flag(args, '--host') ?? process.env.HOST ?? '0.0.0.0';
 	const proxySecret = process.env.LITESCRAPE_KEYLESS_PROXY_SECRET?.trim() || undefined;
+	const edgeSecret = process.env.LITESCRAPE_EDGE_SECRET?.trim() || undefined;
 	const apiUrl = process.env.LITESCRAPE_API_URL?.trim() || undefined;
 	const timeoutMs = Number(process.env.LITESCRAPE_TIMEOUT_MS) || undefined;
-	const server = createHttpServer({ proxySecret, apiUrl, timeoutMs, log: console.error });
+	const server = createHttpServer({
+		proxySecret,
+		edgeSecret,
+		apiUrl,
+		timeoutMs,
+		log: console.error,
+	});
 	server.listen(port, host, () => {
+		const forwarding = proxySecret ? (edgeSecret ? 'on, Cloudflare edge' : 'on') : 'off';
 		console.error(
 			`${PACKAGE_NAME} ${VERSION} listening on http://${host}:${port}${MCP_PATH} ` +
-				`(API key per request, caller forwarding ${proxySecret ? 'on' : 'off'})`,
+				`(API key per request, caller forwarding ${forwarding})`,
 		);
 	});
 	const stop = () => server.close(() => process.exit(0));
