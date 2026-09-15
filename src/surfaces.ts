@@ -423,6 +423,68 @@ export const SURFACES: Surface[] = [
 			);
 		},
 	},
+	{
+		name: 'google_reviews',
+		title: 'Google Reviews',
+		description:
+			'Return the Google Maps reviews of one place (reviews with rating, snippet, author, ' +
+			'date, likes, owner response, guided details and dining subratings) plus place_info. ' +
+			'Identify the place by place_id or data_id from a google_maps result. Sort, filter by ' +
+			'topic or text, and follow pagination.next_page_token for more. Requires an API key.',
+		path: '/api/google/reviews',
+		keyless: false,
+		inputSchema: {
+			place_id: z
+				.string()
+				.optional()
+				.describe('Google place ID such as ChIJ...; exactly one of place_id and data_id'),
+			data_id: z
+				.string()
+				.optional()
+				.describe('Google data ID such as 0x89c2...:0x...; exactly one of place_id and data_id'),
+			hl,
+			gl,
+			sort_by: z
+				.enum(['qualityScore', 'newestFirst', 'ratingHigh', 'ratingLow'])
+				.optional()
+				.describe(
+					'Order: qualityScore (most relevant, default), newestFirst, ratingHigh, ratingLow',
+				),
+			topic_id: z
+				.string()
+				.optional()
+				.describe('Keep reviews on one Google review topic; conflicts with query'),
+			query: z
+				.string()
+				.optional()
+				.describe('Keep reviews mentioning this text; conflicts with topic_id'),
+			num: z
+				.number()
+				.int()
+				.min(1)
+				.max(100)
+				.optional()
+				.describe(
+					'Reviews to return: 1-100 on a first unfiltered request (default 8), 1-20 with ' +
+						'topic_id, query or next_page_token (default 10)',
+				),
+			next_page_token: z
+				.string()
+				.optional()
+				.describe(
+					'pagination.next_page_token from the previous response; keep the same place, sort and filters',
+				),
+			result_groups: resultGroups,
+		},
+		summarize: (payload) => {
+			const reviews = count(payload, 'reviews') ?? 0;
+			const place = isRecord(payload.place_info) ? payload.place_info : {};
+			const name = typeof place.title === 'string' ? ` for ${place.title}` : '';
+			const pagination = isRecord(payload.pagination) ? payload.pagination : {};
+			const more = typeof pagination.next_page_token === 'string' ? '; more pages available' : '';
+			return `Google Reviews${name}: ${reviews} reviews${more}.`;
+		},
+	},
 ];
 
 export function findSurface(name: string): Surface | undefined {

@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.0] - 2026-09-15
+
+### Added
+
+- `google_reviews`: the Google Maps reviews of one place by `place_id` or
+  `data_id`, with sorting, topic and text filters and `next_page_token`
+  pagination. Needs an API key.
+- Streamable HTTP mode: `litescrape-mcp-server --http` (or
+  `LITESCRAPE_MCP_TRANSPORT=http`) serves stateless MCP on `POST /mcp` with a
+  `/healthz` check. The API key comes from each request's
+  `Authorization: Bearer` header or `?api_key=` query parameter, so one
+  process serves keyed and keyless callers. This is what runs at
+  `https://mcp.litescrape.com/mcp`.
+- `LITESCRAPE_KEYLESS_PROXY_SECRET`: in HTTP mode, forwards each caller's
+  address to the API under the secret shared with it, so the free allowance
+  is metered per caller rather than per hosted server.
+
 ## [0.1.1] - 2026-09-15
 
 ### Changed

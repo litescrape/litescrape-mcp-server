@@ -38,6 +38,8 @@ export interface ClientOptions {
 	apiKey?: string;
 	apiUrl?: string;
 	timeoutMs?: number;
+	/** Extra request headers, e.g. the caller's address forwarded by the hosted endpoint. */
+	headers?: Record<string, string>;
 	fetch?: typeof globalThis.fetch;
 	sleep?: (ms: number) => Promise<void>;
 }
@@ -54,6 +56,7 @@ export class LitescrapeClient {
 	readonly apiUrl: string;
 	readonly timeoutMs: number;
 	private readonly apiKey: string;
+	private readonly extraHeaders: Record<string, string>;
 	private readonly fetchImpl: typeof globalThis.fetch;
 	private readonly sleep: (ms: number) => Promise<void>;
 
@@ -61,6 +64,7 @@ export class LitescrapeClient {
 		this.apiKey = (options.apiKey ?? '').trim();
 		this.apiUrl = (options.apiUrl ?? DEFAULT_API_URL).replace(/\/+$/, '');
 		this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+		this.extraHeaders = { ...(options.headers ?? {}) };
 		this.fetchImpl = options.fetch ?? globalThis.fetch;
 		this.sleep = options.sleep ?? defaultSleep;
 	}
@@ -93,6 +97,7 @@ export class LitescrapeClient {
 
 	headers(): Record<string, string> {
 		const headers: Record<string, string> = {
+			...this.extraHeaders,
 			Accept: 'application/json',
 			'User-Agent': this.userAgent,
 			'X-Litescrape-Client': `mcp/${VERSION}`,

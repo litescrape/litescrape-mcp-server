@@ -4,7 +4,7 @@ Instructions for AI agents (Cline, Claude Code, Cursor and similar) that set up 
 
 ## What this server is
 
-`litescrape-mcp-server` gives an assistant live search results from Google Search, Bing, DuckDuckGo and Google Maps through the Litescrape API. It works with **no API key and no account**: those four tools come from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps, one call at a time). Google AI Mode, Google AI Overview and Google Shopping need an API key, which also removes the limits.
+`litescrape-mcp-server` gives an assistant live search results from Google Search, Bing, DuckDuckGo and Google Maps through the Litescrape API. It works with **no API key and no account**: those four tools come from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps, one call at a time). Google AI Mode, Google AI Overview, Google Shopping and Google Reviews need an API key, which also removes the limits.
 
 ## Requirements
 
@@ -36,9 +36,11 @@ Client-specific one-liners:
 
 Do not ask the user for an API key during setup; the server is fully usable without one.
 
+Clients that support remote (Streamable HTTP) servers can use the hosted endpoint instead of running the package: URL `https://mcp.litescrape.com/mcp`, no headers needed. With a key, add the header `Authorization: Bearer ls_live_...`. For example, Claude Code: `claude mcp add --transport http litescrape https://mcp.litescrape.com/mcp`.
+
 ## Optional: API key
 
-Only if the user already has a Litescrape API key (`ls_live_...`), or wants AI Mode, AI Overview, Shopping, or no daily limits, add it as an environment variable:
+Only if the user already has a Litescrape API key (`ls_live_...`), or wants AI Mode, AI Overview, Shopping, Reviews, or no daily limits, add it as an environment variable:
 
 ```json
 {
@@ -58,7 +60,7 @@ Keys are created at https://litescrape.com. Other optional variables: `LITESCRAP
 
 ## Verify
 
-After the client restarts the server, list its tools; expect `search`, `google_search`, `bing_search`, `duckduckgo_search`, `google_maps`, `google_ai_overview`, `google_ai_mode` and `google_shopping`. Then call `search` with `{"q": "model context protocol"}`. A working install returns a one-line summary followed by JSON, for example:
+After the client restarts the server, list its tools; expect `search`, `google_search`, `bing_search`, `duckduckgo_search`, `google_maps`, `google_ai_overview`, `google_ai_mode`, `google_shopping` and `google_reviews`. Then call `search` with `{"q": "model context protocol"}`. A working install returns a one-line summary followed by JSON, for example:
 
 ```
 Google Search (fast mode) for "model context protocol": 10 organic results. Free allowance: 24 of 25 google_search calls left today (no API key set).

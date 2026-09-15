@@ -27,7 +27,8 @@ export function instructions(keyed: boolean): string {
 			'This session is authenticated with a Litescrape API key: every tool is available and ' +
 			'each successful call is billed to that key. search is google_search in fast mode ' +
 			'(organic results only). google_ai_mode generates an answer per request and is the ' +
-			'slowest tool. ' +
+			'slowest tool. google_reviews takes the place_id or data_id of a google_maps result ' +
+			'and pages with next_page_token. ' +
 			shared
 		);
 	}
@@ -35,8 +36,8 @@ export function instructions(keyed: boolean): string {
 		'This session has no Litescrape API key. google_search (25 calls), bing_search (50), ' +
 		'google_maps (50) and duckduckgo_search (50) are free per network per UTC day, one call ' +
 		'at a time; failed calls do not count. search is google_search in fast mode (organic ' +
-		'results only) and shares its allowance. google_ai_mode, google_ai_overview and ' +
-		'google_shopping need an API key, which also lifts every limit: get one at ' +
+		'results only) and shares its allowance. google_ai_mode, google_ai_overview, ' +
+		'google_shopping and google_reviews need an API key, which also lifts every limit: get one at ' +
 		`${KEY_URL} and set LITESCRAPE_API_KEY in this server's environment. ` +
 		shared
 	);

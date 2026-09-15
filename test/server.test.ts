@@ -206,4 +206,57 @@ describe('createServer', () => {
 		expect(result.isError).toBe(true);
 		expect(recorded).toHaveLength(0);
 	});
+
+	it("fetches a place's reviews with a key and names the next page", async () => {
+		const payload = {
+			search_metadata: {},
+			place_info: { title: 'Blue Bottle Coffee', rating: 4.4, reviews: 1200 },
+			reviews: [
+				{ position: 1, rating: 5, snippet: 'Great pour-over.' },
+				{ position: 2, rating: 3, snippet: 'Long line.' },
+			],
+			pagination: { next: 'https://api.litescrape.com/...', next_page_token: 'tok' },
+		};
+		const { call, text, recorded } = connected({
+			apiKey: 'ls_live_k',
+			responses: [[200, payload]],
+		});
+		const result = await call('google_reviews', {
+			place_id: 'ChIJT2h1HKZZwokR0kgzEtsa03k',
+			sort_by: 'newestFirst',
+			num: 2,
+		});
+		expect(result.isError).toBeFalsy();
+		expect(text(result).split('\n\n')[0]).toBe(
+			'Google Reviews for Blue Bottle Coffee: 2 reviews; more pages available.',
+		);
+		expect(recorded[0]?.url.pathname).toBe('/api/google/reviews');
+		expect(recorded[0]?.url.searchParams.get('sort_by')).toBe('newestFirst');
+		expect(recorded[0]?.headers.Authorization).toBe('Bearer ls_live_k');
+	});
+
+	it('refuses google_reviews without a key before any request', async () => {
+		const { call, text, recorded } = connected({ responses: [] });
+		const result = await call('google_reviews', { place_id: 'ChIJ' });
+		expect(result.isError).toBe(true);
+		expect(text(result)).toContain('google_reviews needs a Litescrape API key');
+		expect(recorded).toHaveLength(0);
+	});
+
+	it('sends extra client headers with every request', async () => {
+		const recorded: Recorded[] = [];
+		const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+			recorded.push({
+				url: new URL(String(input)),
+				headers: { ...(init?.headers as Record<string, string>) },
+			});
+			return new Response('{"search_metadata":{}}', {
+				headers: { 'content-type': 'application/json' },
+			});
+		}) as typeof fetch;
+		const client = new LitescrapeClient({ fetch: fetchImpl, headers: { 'X-Extra': '1' } });
+		await client.get('/api/google/search', { q: 'x' });
+		expect(recorded[0]?.headers['X-Extra']).toBe('1');
+		expect(recorded[0]?.headers['X-Litescrape-Client']).toMatch(/^mcp\//);
+	});
 });

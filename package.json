@@ -1,7 +1,7 @@
 {
 	"name": "litescrape-mcp-server",
-	"version": "0.1.1",
-	"description": "MCP server for the Litescrape API: Google Search, Bing, DuckDuckGo and Google Maps free without an API key, plus Google AI Mode, AI Overview and Shopping with one",
+	"version": "0.2.0",
+	"description": "MCP server for the Litescrape API: Google Search, Bing, DuckDuckGo and Google Maps free without an API key, plus Google AI Mode, AI Overview, Shopping and Reviews with one. Stdio or Streamable HTTP.",
 	"license": "MIT",
 	"homepage": "https://litescrape.com",
 	"mcpName": "com.litescrape/litescrape-mcp-server",
@@ -31,6 +31,7 @@
 		"google ai mode",
 		"google ai overview",
 		"google shopping",
+		"google reviews",
 		"web search",
 		"claude",
 		"cursor"
