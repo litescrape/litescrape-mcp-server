@@ -1,0 +1,75 @@
+{
+	"manifest_version": "0.3",
+	"name": "litescrape-mcp-server",
+	"display_name": "Litescrape",
+	"version": "0.1.1",
+	"description": "Google, Bing, DuckDuckGo and Google Maps search results, free without an API key.",
+	"long_description": "Live search results straight from Google Search, Bing, DuckDuckGo and Google Maps as structured JSON, through the Litescrape API. Works with no API key and no account from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps). Add a Litescrape API key for Google AI Mode, Google AI Overview and Google Shopping, and to lift every limit. Every tool returns the API's JSON unchanged after a one-line summary; result_groups keeps only the groups you need.",
+	"author": {
+		"name": "Litescrape",
+		"email": "support@litescrape.com",
+		"url": "https://litescrape.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/litescrape/litescrape-mcp-server"
+	},
+	"homepage": "https://litescrape.com",
+	"documentation": "https://github.com/litescrape/litescrape-mcp-server#readme",
+	"support": "https://github.com/litescrape/litescrape-mcp-server/issues",
+	"icon": "assets/logo-512.png",
+	"server": {
+		"type": "node",
+		"entry_point": "dist/index.js",
+		"mcp_config": {
+			"command": "node",
+			"args": ["${__dirname}/dist/index.js"],
+			"env": {
+				"LITESCRAPE_API_KEY": "${user_config.api_key}"
+			}
+		}
+	},
+	"tools": [
+		{ "name": "search", "description": "Web search through Google; organic results only" },
+		{ "name": "google_search", "description": "Full Google Search results page as JSON" },
+		{ "name": "bing_search", "description": "Bing web search results as JSON" },
+		{ "name": "duckduckgo_search", "description": "DuckDuckGo web search results as JSON" },
+		{ "name": "google_maps", "description": "Google Maps places or one exact place" },
+		{ "name": "google_ai_overview", "description": "Google's AI Overview for a search (API key)" },
+		{
+			"name": "google_ai_mode",
+			"description": "Google AI Mode answer with cited sources (API key)"
+		},
+		{
+			"name": "google_shopping",
+			"description": "Google Shopping product grid and filters (API key)"
+		}
+	],
+	"keywords": [
+		"search",
+		"google",
+		"google search",
+		"bing",
+		"duckduckgo",
+		"google maps",
+		"serp",
+		"web search",
+		"litescrape"
+	],
+	"license": "MIT",
+	"compatibility": {
+		"platforms": ["darwin", "win32", "linux"],
+		"runtimes": {
+			"node": ">=20"
+		}
+	},
+	"user_config": {
+		"api_key": {
+			"type": "string",
+			"title": "Litescrape API key",
+			"description": "Optional. Leave empty to use the free keyless allowance. A key unlocks Google AI Mode, AI Overview and Shopping and removes the daily limits; get one at https://litescrape.com.",
+			"sensitive": true,
+			"required": false
+		}
+	}
+}
