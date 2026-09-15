@@ -30,19 +30,755 @@
 		}
 	},
 	"tools": [
-		{ "name": "search", "description": "Web search through Google; organic results only" },
-		{ "name": "google_search", "description": "Full Google Search results page as JSON" },
-		{ "name": "bing_search", "description": "Bing web search results as JSON" },
-		{ "name": "duckduckgo_search", "description": "DuckDuckGo web search results as JSON" },
-		{ "name": "google_maps", "description": "Google Maps places or one exact place" },
-		{ "name": "google_ai_overview", "description": "Google's AI Overview for a search (API key)" },
+		{
+			"name": "search",
+			"description": "Search the web through Google and return ranked organic results (title, link, snippet) as JSON. Fast mode: no Knowledge Graph, ads or AI modules; use google_search for the full results page. Free without an API key (shares the google_search allowance).",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 2048,
+						"description": "What to search for"
+					},
+					"gl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "Two-letter country for localization, e.g. \"us\""
+					},
+					"hl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 10,
+						"description": "Language code such as \"en\" or \"en-GB\"; default en"
+					},
+					"location": {
+						"type": "string",
+						"maxLength": 512,
+						"description": "Named search origin such as \"Austin, Texas\"; conflicts with uule and lat/lon"
+					},
+					"num": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 100,
+						"description": "Requested result count, 1-100; Google may return fewer"
+					},
+					"start": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Result offset for pagination"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"required": ["q"],
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
+		},
+		{
+			"name": "google_search",
+			"description": "Fetch a first-party Google Search results page as JSON: organic_results plus whichever modules Google served (knowledge_graph, answer_box, ai_overview, ads, related_questions, related_searches, local_results, top_stories, inline_videos and more). Supports localization, verticals (news, videos, local, shopping, patents), date filters and site restriction. Free without an API key: 25 calls per network per day.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 2048,
+						"description": "Search query; required unless ludocid or kgmid is supplied"
+					},
+					"ludocid": {
+						"type": "string",
+						"description": "Google CID of a local entity, for a targeted lookup"
+					},
+					"kgmid": {
+						"type": "string",
+						"description": "Knowledge Graph machine ID such as /m/0k8z"
+					},
+					"location": {
+						"type": "string",
+						"maxLength": 512,
+						"description": "Named search origin such as \"Austin, Texas\"; conflicts with uule and lat/lon"
+					},
+					"uule": {
+						"type": "string",
+						"maxLength": 2048,
+						"description": "Pre-encoded Google location token; conflicts with location"
+					},
+					"lat": {
+						"type": "number",
+						"minimum": -90,
+						"maximum": 90,
+						"description": "Latitude; supply together with lon"
+					},
+					"lon": {
+						"type": "number",
+						"minimum": -180,
+						"maximum": 180,
+						"description": "Longitude; supply together with lat"
+					},
+					"radius": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Radius in meters around the location or coordinates"
+					},
+					"google_domain": {
+						"type": "string",
+						"description": "Google domain such as google.co.uk; default google.com"
+					},
+					"gl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "Two-letter country for localization, e.g. \"us\""
+					},
+					"hl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 10,
+						"description": "Language code such as \"en\" or \"en-GB\"; default en"
+					},
+					"cr": {
+						"type": "string",
+						"description": "Country restrict such as countryUS|countryCA"
+					},
+					"lr": {
+						"type": "string",
+						"description": "Language restrict such as lang_en|lang_fr"
+					},
+					"tbs": {
+						"type": "string",
+						"maxLength": 4096,
+						"description": "Google search-filter string, e.g. qdr:w for the past week"
+					},
+					"tbm": {
+						"type": "string",
+						"enum": ["lcl", "vid", "nws", "shop", "pts"],
+						"description": "Vertical: lcl local, vid videos, nws news, shop shopping, pts patents"
+					},
+					"safe": {
+						"type": "string",
+						"enum": ["active", "off"],
+						"description": "SafeSearch"
+					},
+					"nfpr": {
+						"type": "string",
+						"enum": ["0", "1"],
+						"description": "1 disables spelling auto-correction"
+					},
+					"filter": {
+						"type": "string",
+						"enum": ["0", "1"],
+						"description": "0 disables duplicate-content filtering"
+					},
+					"as_sitesearch": {
+						"type": "string",
+						"maxLength": 253,
+						"description": "Restrict results to this hostname"
+					},
+					"as_qdr": {
+						"type": "string",
+						"description": "Date range: d, w, m or y with an optional count, e.g. d7 for the past week"
+					},
+					"start": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Result offset for pagination"
+					},
+					"num": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 100,
+						"description": "Requested result count, 1-100; Google may return fewer"
+					},
+					"device": {
+						"type": "string",
+						"enum": ["desktop", "tablet", "mobile"],
+						"description": "Layout to request; default desktop"
+					},
+					"fast_mode": {
+						"type": "boolean",
+						"description": "true returns only organic_results (faster and smaller); skips AI Overview, Knowledge Graph, ads and every other module"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
+		},
+		{
+			"name": "bing_search",
+			"description": "Fetch a Bing web search results page as JSON: organic_results plus the modules Bing served (answer_box, knowledge_graph, copilot_answer, ads, related_questions, inline_videos, top_stories and more). Free without an API key: 50 calls per network per day.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 2048,
+						"description": "Search query; Bing operators are preserved"
+					},
+					"location": {
+						"type": "string",
+						"maxLength": 256,
+						"description": "City-level search origin"
+					},
+					"lat": {
+						"type": "number",
+						"minimum": -90,
+						"maximum": 90,
+						"description": "Latitude; supply together with lon"
+					},
+					"lon": {
+						"type": "number",
+						"minimum": -180,
+						"maximum": 180,
+						"description": "Longitude; supply together with lat"
+					},
+					"mkt": {
+						"type": "string",
+						"description": "Market such as en-US; conflicts with cc"
+					},
+					"cc": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "Two-letter country code; conflicts with mkt"
+					},
+					"first": {
+						"type": "integer",
+						"minimum": 1,
+						"description": "One-based organic result offset for pagination; default 1"
+					},
+					"safeSearch": {
+						"type": "string",
+						"enum": ["off", "moderate", "strict"],
+						"description": "Default moderate"
+					},
+					"filters": {
+						"type": "string",
+						"maxLength": 8192,
+						"description": "Native Bing display or date filters"
+					},
+					"device": {
+						"type": "string",
+						"enum": ["desktop", "tablet", "mobile"],
+						"description": "Layout to request; default desktop"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"required": ["q"],
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
+		},
+		{
+			"name": "duckduckgo_search",
+			"description": "Fetch ranked DuckDuckGo web results (organic_results with title, link, snippet) with region, safety and date controls. Free without an API key: 50 calls per network per day.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 500,
+						"description": "Search query"
+					},
+					"kl": {
+						"type": "string",
+						"maxLength": 32,
+						"description": "Region and language token such as us-en"
+					},
+					"search_assist": {
+						"type": "boolean",
+						"description": "Default true; cannot be combined with m"
+					},
+					"safe": {
+						"type": "string",
+						"enum": ["1", "-1", "-2"],
+						"description": "1 strict, -1 moderate (default), -2 off"
+					},
+					"df": {
+						"type": "string",
+						"description": "Date filter: d, w, m, y, or YYYY-MM-DD..YYYY-MM-DD"
+					},
+					"start": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 10000,
+						"description": "Result offset"
+					},
+					"m": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 50,
+						"description": "Result count 1-50; cannot be combined with search_assist"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"required": ["q"],
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
+		},
+		{
+			"name": "google_maps",
+			"description": "Search Google Maps for places (local_results with name, address, rating, reviews, hours, phone, website, coordinates) or fetch one exact place (place_results) by place_id, data_cid or data sequence. Filter by price, rating and opening hours. Free without an API key: 50 calls per network per day.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"description": "Search text; required for type=search"
+					},
+					"type": {
+						"type": "string",
+						"enum": ["search", "place"],
+						"description": "search (default) for a query, or place for one exact place identified by place_id, data_cid or data"
+					},
+					"ll": {
+						"type": "string",
+						"description": "Viewport as @lat,lon,14z or @lat,lon,5000m"
+					},
+					"location": {
+						"type": "string",
+						"maxLength": 512,
+						"description": "Named search origin such as \"Austin, Texas\"; conflicts with uule and lat/lon"
+					},
+					"lat": {
+						"type": "number",
+						"minimum": -90,
+						"maximum": 90,
+						"description": "Latitude; supply together with lon"
+					},
+					"lon": {
+						"type": "number",
+						"minimum": -180,
+						"maximum": 180,
+						"description": "Longitude; supply together with lat"
+					},
+					"z": {
+						"type": "number",
+						"minimum": 3,
+						"maximum": 30,
+						"description": "Zoom 3-30; use with location or lat/lon"
+					},
+					"m": {
+						"type": "number",
+						"minimum": 1,
+						"description": "Radius in meters; use with location or lat/lon"
+					},
+					"nearby": {
+						"type": "boolean",
+						"description": "Restrict results to places near the viewport"
+					},
+					"place_id": {
+						"type": "string",
+						"description": "Exact place by Google place ID"
+					},
+					"data_cid": {
+						"type": "string",
+						"description": "Exact place by decimal Google CID"
+					},
+					"data": {
+						"type": "string",
+						"maxLength": 8192,
+						"description": "Exact place by Google Maps data sequence"
+					},
+					"start": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Native Maps result offset"
+					},
+					"hl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 10,
+						"description": "Language code such as \"en\" or \"en-GB\"; default en"
+					},
+					"gl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "Two-letter country for localization, e.g. \"us\""
+					},
+					"google_domain": {
+						"type": "string",
+						"description": "Google domain such as google.co.uk; default google.com"
+					},
+					"min_price": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Price level lower bound"
+					},
+					"max_price": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Price level upper bound"
+					},
+					"min_rating": {
+						"type": "string",
+						"enum": ["2.0", "2.5", "3.0", "3.5", "4.0", "4.5"],
+						"description": "Minimum rating preference"
+					},
+					"open_state": {
+						"type": "string",
+						"enum": ["now", "24h"],
+						"description": "Open now, or open 24 hours; cannot combine with open_on_day"
+					},
+					"open_on_day": {
+						"type": "string",
+						"enum": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
+					},
+					"open_at_hour": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 23,
+						"description": "Hour 0-23; requires open_on_day"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
+		},
+		{
+			"name": "google_ai_overview",
+			"description": "Return only the AI Overview Google generates for a search (ai_overview with ordered text_blocks and cited references), or null when Google shows none. Accepts the google_search parameters. Requires an API key.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 2048,
+						"description": "Search query; required unless ludocid or kgmid is supplied"
+					},
+					"ludocid": {
+						"type": "string",
+						"description": "Google CID of a local entity, for a targeted lookup"
+					},
+					"kgmid": {
+						"type": "string",
+						"description": "Knowledge Graph machine ID such as /m/0k8z"
+					},
+					"location": {
+						"type": "string",
+						"maxLength": 512,
+						"description": "Named search origin such as \"Austin, Texas\"; conflicts with uule and lat/lon"
+					},
+					"uule": {
+						"type": "string",
+						"maxLength": 2048,
+						"description": "Pre-encoded Google location token; conflicts with location"
+					},
+					"lat": {
+						"type": "number",
+						"minimum": -90,
+						"maximum": 90,
+						"description": "Latitude; supply together with lon"
+					},
+					"lon": {
+						"type": "number",
+						"minimum": -180,
+						"maximum": 180,
+						"description": "Longitude; supply together with lat"
+					},
+					"radius": {
+						"type": "number",
+						"exclusiveMinimum": 0,
+						"description": "Radius in meters around the location or coordinates"
+					},
+					"google_domain": {
+						"type": "string",
+						"description": "Google domain such as google.co.uk; default google.com"
+					},
+					"gl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "Two-letter country for localization, e.g. \"us\""
+					},
+					"hl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 10,
+						"description": "Language code such as \"en\" or \"en-GB\"; default en"
+					},
+					"cr": {
+						"type": "string",
+						"description": "Country restrict such as countryUS|countryCA"
+					},
+					"lr": {
+						"type": "string",
+						"description": "Language restrict such as lang_en|lang_fr"
+					},
+					"tbs": {
+						"type": "string",
+						"maxLength": 4096,
+						"description": "Google search-filter string, e.g. qdr:w for the past week"
+					},
+					"tbm": {
+						"type": "string",
+						"enum": ["lcl", "vid", "nws", "shop", "pts"],
+						"description": "Vertical: lcl local, vid videos, nws news, shop shopping, pts patents"
+					},
+					"safe": {
+						"type": "string",
+						"enum": ["active", "off"],
+						"description": "SafeSearch"
+					},
+					"nfpr": {
+						"type": "string",
+						"enum": ["0", "1"],
+						"description": "1 disables spelling auto-correction"
+					},
+					"filter": {
+						"type": "string",
+						"enum": ["0", "1"],
+						"description": "0 disables duplicate-content filtering"
+					},
+					"as_sitesearch": {
+						"type": "string",
+						"maxLength": 253,
+						"description": "Restrict results to this hostname"
+					},
+					"as_qdr": {
+						"type": "string",
+						"description": "Date range: d, w, m or y with an optional count, e.g. d7 for the past week"
+					},
+					"start": {
+						"type": "integer",
+						"minimum": 0,
+						"description": "Result offset for pagination"
+					},
+					"num": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 100,
+						"description": "Requested result count, 1-100; Google may return fewer"
+					},
+					"device": {
+						"type": "string",
+						"enum": ["desktop", "tablet", "mobile"],
+						"description": "Layout to request; default desktop"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
+		},
 		{
 			"name": "google_ai_mode",
-			"description": "Google AI Mode answer with cited sources (API key)"
+			"description": "Ask Google AI Mode a question and return its generated answer (ordered text_blocks: paragraphs, headings, lists, tables, code) with the sources it cited (references). Set continuable to get a token for follow-up questions; image_url adds a picture to the prompt. Slow: answers are generated per request. Requires an API key.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 2048,
+						"description": "The question to ask"
+					},
+					"location": {
+						"type": "string",
+						"maxLength": 512,
+						"description": "Named search origin such as \"Austin, Texas\"; conflicts with uule and lat/lon"
+					},
+					"uule": {
+						"type": "string",
+						"maxLength": 2048,
+						"description": "Pre-encoded Google location token; conflicts with location"
+					},
+					"google_domain": {
+						"type": "string",
+						"description": "Google domain such as google.co.uk; default google.com"
+					},
+					"gl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "Two-letter country for localization, e.g. \"us\""
+					},
+					"hl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 10,
+						"description": "Language code such as \"en\" or \"en-GB\"; default en"
+					},
+					"device": {
+						"type": "string",
+						"enum": ["desktop", "tablet", "mobile"],
+						"description": "Layout to request; default desktop"
+					},
+					"continuable": {
+						"type": "boolean",
+						"description": "Return a subsequent_request_token so the conversation can continue"
+					},
+					"subsequent_request_token": {
+						"type": "string",
+						"description": "Token from a previous continuable answer; send with a new q. Expires after 30 minutes; cannot combine with image_url"
+					},
+					"image_url": {
+						"type": "string",
+						"format": "uri",
+						"description": "Public http(s) image to include in the prompt; cannot combine with a token"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"required": ["q"],
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
 		},
 		{
 			"name": "google_shopping",
-			"description": "Google Shopping product grid and filters (API key)"
+			"description": "Search Google Shopping and return the product grid (shopping_results with title, price, source, rating, thumbnail), category blocks, sponsored listings and the refinement chips Google renders (filters). Price bounds, sale, shipping and small business refinements are mutually exclusive; sort_by combines with one of them. Requires an API key.",
+			"inputSchema": {
+				"type": "object",
+				"properties": {
+					"q": {
+						"type": "string",
+						"minLength": 1,
+						"maxLength": 2048,
+						"description": "Product query; required unless shoprs is supplied"
+					},
+					"location": {
+						"type": "string",
+						"maxLength": 512,
+						"description": "Named search origin such as \"Austin, Texas\"; conflicts with uule and lat/lon"
+					},
+					"uule": {
+						"type": "string",
+						"maxLength": 2048,
+						"description": "Pre-encoded Google location token; conflicts with location"
+					},
+					"google_domain": {
+						"type": "string",
+						"description": "Google domain such as google.co.uk; default google.com"
+					},
+					"gl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 2,
+						"description": "Two-letter country for localization, e.g. \"us\""
+					},
+					"hl": {
+						"type": "string",
+						"minLength": 2,
+						"maxLength": 10,
+						"description": "Language code such as \"en\" or \"en-GB\"; default en"
+					},
+					"shoprs": {
+						"type": "string",
+						"maxLength": 4096,
+						"description": "Refinement token from a previous response's filters"
+					},
+					"min_price": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Lower price bound"
+					},
+					"max_price": {
+						"type": "number",
+						"minimum": 0,
+						"description": "Upper price bound"
+					},
+					"sort_by": {
+						"type": "string",
+						"enum": ["1", "2", "3", "4"],
+						"description": "1 price low to high, 2 price high to low, 3 rating, 4 relevance"
+					},
+					"free_shipping": {
+						"type": "boolean"
+					},
+					"on_sale": {
+						"type": "boolean"
+					},
+					"small_business": {
+						"type": "boolean"
+					},
+					"start": {
+						"type": "integer",
+						"minimum": 0,
+						"maximum": 1000,
+						"description": "Result offset"
+					},
+					"num": {
+						"type": "integer",
+						"minimum": 1,
+						"maximum": 100,
+						"description": "Product count, 1-100"
+					},
+					"device": {
+						"type": "string",
+						"enum": ["desktop", "tablet", "mobile"],
+						"description": "Layout to request; default desktop"
+					},
+					"result_groups": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"minLength": 1
+						},
+						"description": "Return only these top-level result groups, e.g. [\"organic_results\", \"knowledge_graph\"]; omit for the complete response. search_metadata is always kept"
+					}
+				},
+				"additionalProperties": false,
+				"$schema": "http://json-schema.org/draft-07/schema#"
+			}
 		}
 	],
 	"keywords": [
