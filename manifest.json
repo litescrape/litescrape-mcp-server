@@ -29,22 +29,6 @@
 			}
 		}
 	},
-	"tools": [
-		{ "name": "search", "description": "Web search through Google; organic results only" },
-		{ "name": "google_search", "description": "Full Google Search results page as JSON" },
-		{ "name": "bing_search", "description": "Bing web search results as JSON" },
-		{ "name": "duckduckgo_search", "description": "DuckDuckGo web search results as JSON" },
-		{ "name": "google_maps", "description": "Google Maps places or one exact place" },
-		{ "name": "google_ai_overview", "description": "Google's AI Overview for a search (API key)" },
-		{
-			"name": "google_ai_mode",
-			"description": "Google AI Mode answer with cited sources (API key)"
-		},
-		{
-			"name": "google_shopping",
-			"description": "Google Shopping product grid and filters (API key)"
-		}
-	],
 	"keywords": [
 		"search",
 		"google",
