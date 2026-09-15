@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1] - 2026-09-15
+
+### Changed
+
+- Releases are published from GitHub Actions with an npm provenance
+  attestation, so the package on npm can be verified against this repository
+  and its release tag. No functional changes.
+
 ## [0.1.0] - 2026-09-14
 
 ### Added
