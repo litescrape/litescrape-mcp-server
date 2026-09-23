@@ -8,19 +8,19 @@
 		"source": "github"
 	},
 	"websiteUrl": "https://litescrape.com",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "litescrape-mcp-server",
-			"version": "0.2.1",
+			"version": "0.3.0",
 			"transport": {
 				"type": "stdio"
 			},
 			"environmentVariables": [
 				{
 					"name": "LITESCRAPE_API_KEY",
-					"description": "Optional Litescrape API key. Without it, search, google_search, bing_search, google_maps and duckduckgo_search work from a free daily allowance; with it google_ai_mode, google_ai_overview, google_shopping and google_reviews are available too and the limits are lifted.",
+					"description": "Optional Litescrape API key. Without it, search, google_search, bing_search, google_maps and duckduckgo_search work from a free daily allowance; with it google_ai_mode, google_ai_overview, google_shopping, google_reviews and web_fetch are available too and the limits are lifted.",
 					"isRequired": false,
 					"isSecret": true,
 					"format": "string"

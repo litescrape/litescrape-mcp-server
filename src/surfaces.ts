@@ -104,9 +104,9 @@ const googleSearchBase = {
 		.number()
 		.int()
 		.min(1)
-		.max(100)
+		.max(10)
 		.optional()
-		.describe('Requested result count, 1-100; Google may return fewer'),
+		.describe('Requested result count, 1-10; Google may return fewer'),
 	device,
 };
 
@@ -153,9 +153,9 @@ export const SURFACES: Surface[] = [
 				.number()
 				.int()
 				.min(1)
-				.max(100)
+				.max(10)
 				.optional()
-				.describe('Requested result count, 1-100; Google may return fewer'),
+				.describe('Requested result count, 1-10; Google may return fewer'),
 			start: z.number().int().min(0).optional().describe('Result offset for pagination'),
 			result_groups: resultGroups,
 		},
@@ -483,6 +483,83 @@ export const SURFACES: Surface[] = [
 			const pagination = isRecord(payload.pagination) ? payload.pagination : {};
 			const more = typeof pagination.next_page_token === 'string' ? '; more pages available' : '';
 			return `Google Reviews${name}: ${reviews} reviews${more}.`;
+		},
+	},
+	{
+		name: 'web_fetch',
+		title: 'Fetch a web page',
+		description:
+			'Render one public web page in a fresh browser and return it as Markdown (default), ' +
+			'HTML, plain text or a full-page PNG screenshot encoded as base64, with url, title, ' +
+			'content and the status_code the site returned. Narrow the content with ' +
+			'target_selector or remove_selector. Alpha. Requires an API key.',
+		path: '/api/web/fetch',
+		keyless: false,
+		inputSchema: {
+			url: z
+				.string()
+				.min(1)
+				.max(8192)
+				.describe('Public http:// or https:// URL on the standard port, without credentials'),
+			respond_with: z
+				.enum(['markdown', 'html', 'text', 'screenshot'])
+				.optional()
+				.describe('Output format; default markdown. screenshot returns a base64 PNG'),
+			target_selector: z
+				.string()
+				.min(1)
+				.max(2048)
+				.optional()
+				.describe('CSS selector to extract; falls back to the full page when nothing matches'),
+			remove_selector: z
+				.string()
+				.min(1)
+				.max(2048)
+				.optional()
+				.describe('CSS selector removed before extraction, e.g. "nav, footer"'),
+			wait_for_selector: z
+				.string()
+				.min(1)
+				.max(2048)
+				.optional()
+				.describe('CSS selector to wait for after navigation'),
+			wait_until: z
+				.enum(['commit', 'domcontentloaded', 'load', 'networkidle'])
+				.optional()
+				.describe('Navigation event to wait for; default domcontentloaded'),
+			page_timeout: z
+				.number()
+				.int()
+				.min(1)
+				.max(180)
+				.optional()
+				.describe('Seconds for browser operations; default 30'),
+			locale: z.string().min(2).max(64).optional().describe('Browser locale; default en-US'),
+			user_agent: z.string().min(1).max(1024).optional().describe('User-Agent to send'),
+			with_links: z
+				.enum(['inlined', 'referenced', 'collapsed', 'shortcut', 'discarded'])
+				.optional()
+				.describe('How Markdown writes links; default inlined'),
+			with_images: z
+				.enum(['all', 'alt', 'none'])
+				.optional()
+				.describe('How Markdown writes images; default all'),
+			with_iframe: z
+				.enum(['true', 'false', 'quoted'])
+				.optional()
+				.describe('Include direct child frames before extraction; default false'),
+			with_shadow_dom: z
+				.boolean()
+				.optional()
+				.describe('Expand open shadow roots before extraction; default false'),
+		},
+		summarize: (payload) => {
+			const title = typeof payload.title === 'string' && payload.title ? ` "${payload.title}"` : '';
+			const status =
+				typeof payload.status_code === 'number' ? `, site status ${payload.status_code}` : '';
+			const size =
+				typeof payload.content === 'string' ? `, ${payload.content.length} characters` : '';
+			return `Fetched${title}${status}${size}.`;
 		},
 	},
 ];

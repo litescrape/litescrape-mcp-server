@@ -67,7 +67,7 @@ One call runs at a time per network, and failed calls never count. When a limit 
 
 ## Add an API key
 
-A key unlocks `google_ai_mode`, `google_ai_overview`, `google_shopping` and `google_reviews`, removes the daily limits and allows concurrent calls. Get one at [litescrape.com](https://litescrape.com), then set `LITESCRAPE_API_KEY` in the server's environment:
+A key unlocks `google_ai_mode`, `google_ai_overview`, `google_shopping`, `google_reviews` and `web_fetch`, removes the daily limits and allows concurrent calls. Get one at [litescrape.com](https://litescrape.com), then set `LITESCRAPE_API_KEY` in the server's environment:
 
 ```json
 {
@@ -100,6 +100,7 @@ With the hosted endpoint: `claude mcp add --transport http litescrape https://mc
 | `google_ai_mode`     | Yes        | Google AI Mode's generated answer with its cited sources; `continuable` returns a follow-up token, `image_url` adds a picture to the question                                                                                                                          |
 | `google_shopping`    | Yes        | The Google Shopping product grid, category blocks, sponsored listings and refinement chips; price, sale, shipping and small-business refinements, `sort_by`, pagination                                                                                                |
 | `google_reviews`     | Yes        | The Google Maps reviews of one place by `place_id` or `data_id` (from a `google_maps` result) with `place_info`; `sort_by`, `topic_id` or `query` filters, `num`, and `next_page_token` for the next page                                                              |
+| `web_fetch`          | Yes        | One public web page rendered in a fresh browser, as Markdown (default), HTML, text or a base64 PNG screenshot, with the site's `status_code`; `target_selector`, `remove_selector`, `wait_until`, `wait_for_selector`, `page_timeout`, link and image styles. Alpha    |
 
 Parameter names and accepted values follow the [Litescrape API reference](https://litescrape.com/docs).
 

@@ -2,7 +2,7 @@
 	"manifest_version": "0.3",
 	"name": "litescrape-mcp-server",
 	"display_name": "Litescrape",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"description": "Google, Bing, DuckDuckGo and Google Maps search results, free without an API key.",
 	"long_description": "Live search results straight from Google Search, Bing, DuckDuckGo and Google Maps as structured JSON, through the Litescrape API. Works with no API key and no account from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps). Add a Litescrape API key for Google AI Mode, Google AI Overview, Google Shopping and Google Reviews, and to lift every limit. Every tool returns the API's JSON unchanged after a one-line summary; result_groups keeps only the groups you need.",
 	"author": {

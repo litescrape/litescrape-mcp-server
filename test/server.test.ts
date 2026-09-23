@@ -235,6 +235,50 @@ describe('createServer', () => {
 		expect(recorded[0]?.headers.Authorization).toBe('Bearer ls_live_k');
 	});
 
+	it('fetches a web page with a key and reports the site status', async () => {
+		const payload = {
+			url: 'https://example.com',
+			title: 'Example Domain',
+			content: '# Example Domain',
+			status_code: 200,
+		};
+		const { call, text, recorded } = connected({
+			apiKey: 'ls_live_k',
+			responses: [[200, payload]],
+		});
+		const result = await call('web_fetch', {
+			url: 'https://example.com',
+			target_selector: 'main',
+			with_shadow_dom: true,
+		});
+		expect(result.isError).toBeFalsy();
+		expect(text(result).split('\n\n')[0]).toBe(
+			'Fetched "Example Domain", site status 200, 16 characters.',
+		);
+		expect(recorded[0]?.url.pathname).toBe('/api/web/fetch');
+		expect(recorded[0]?.url.searchParams.get('url')).toBe('https://example.com');
+		expect(recorded[0]?.url.searchParams.get('target_selector')).toBe('main');
+		expect(recorded[0]?.url.searchParams.get('with_shadow_dom')).toBe('true');
+		expect(recorded[0]?.headers.Authorization).toBe('Bearer ls_live_k');
+	});
+
+	it('refuses web_fetch without a key before any request', async () => {
+		const { call, text, recorded } = connected({ responses: [] });
+		const result = await call('web_fetch', { url: 'https://example.com' });
+		expect(result.isError).toBe(true);
+		expect(text(result)).toContain('web_fetch needs a Litescrape API key');
+		expect(recorded).toHaveLength(0);
+	});
+
+	it('limits Google Search num to 10 before any request', async () => {
+		for (const tool of ['search', 'google_search']) {
+			const { call, recorded } = connected({ responses: [] });
+			const result = await call(tool, { q: 'coffee', num: 11 });
+			expect(result.isError).toBe(true);
+			expect(recorded).toHaveLength(0);
+		}
+	});
+
 	it('refuses google_reviews without a key before any request', async () => {
 		const { call, text, recorded } = connected({ responses: [] });
 		const result = await call('google_reviews', { place_id: 'ChIJ' });

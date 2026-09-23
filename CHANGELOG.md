@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0] - 2026-09-22
+
+### Added
+
+- `web_fetch`: one public web page rendered in a fresh browser, returned as
+  Markdown (default), HTML, plain text or a base64 PNG screenshot, with the
+  status code the site returned. Supports target and remove selectors, wait
+  conditions, page timeout, locale, user agent, link and image styles,
+  iframes and shadow DOM. Needs an API key.
+
+### Changed
+
+- `num` on `search` and `google_search` accepts 1 to 10, the most Google
+  returns on one page. Use `start` to page further.
+
 ## [0.2.1] - 2026-09-15
 
 ### Changed
