@@ -2,25 +2,25 @@
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "com.litescrape/litescrape-mcp-server",
 	"title": "Litescrape",
-	"description": "Google, Bing, DuckDuckGo and Google Maps free without an API key, plus 135 more tools with one.",
+	"description": "Google, Bing, DuckDuckGo and Google Maps free without an API key, plus 130+ more tools found on demand.",
 	"repository": {
 		"url": "https://github.com/litescrape/litescrape-mcp-server",
 		"source": "github"
 	},
 	"websiteUrl": "https://litescrape.com",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "litescrape-mcp-server",
-			"version": "0.4.0",
+			"version": "0.5.0",
 			"transport": {
 				"type": "stdio"
 			},
 			"environmentVariables": [
 				{
 					"name": "LITESCRAPE_API_KEY",
-					"description": "Optional Litescrape API key. Without it, search, google_search, bing_search, google_maps and duckduckgo_search work from a free daily allowance; with it every other tool (google_ai_mode, google_shopping, web_fetch and the rest of the Litescrape catalog) is available too and the limits are lifted.",
+					"description": "Optional Litescrape API key. Without it, google_search, bing_search, google_maps and duckduckgo_search work from a free daily allowance; with it every other tool find_tools finds (google_ai_mode, google_shopping, web_fetch and the rest of the Litescrape catalog) runs through call_tool too and the limits are lifted.",
 					"isRequired": false,
 					"isSecret": true,
 					"format": "string"

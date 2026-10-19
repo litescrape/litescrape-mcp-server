@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.5.0] - 2026-10-19
+
+### Changed
+
+- The server lists only the free tools (`google_search`, `bing_search`,
+  `duckduckgo_search`, `google_maps`) plus `find_tools` and `call_tool`,
+  with or without an API key. The tool list drops from about 50K tokens of
+  context to about 5K.
+- Tool names, descriptions and input schemas come from the Litescrape API's
+  `/api/tools` catalog (and its OpenAPI descriptions) instead of a copy kept
+  in this package. `npm run catalog` regenerates the free tools.
+- Arguments are validated by the API, which reports the argument at fault;
+  failed calls are not charged.
+- Result summaries no longer list the API's feedback link as a result group.
+
+### Added
+
+- `find_tools`: describe a task in plain language to get the best-matching
+  Litescrape tools with their input schemas, or fetch tools by name. It
+  works without a key, so an agent can see what a key unlocks.
+- `call_tool`: runs any found tool by name. A catalog tool called by its own
+  name directly runs the same way.
+
+### Removed
+
+- The `search` tool. Call `google_search` with `fast_mode: true` for the same
+  organic-only results.
+- The 135 key-only tools from the tool list; reach them with `find_tools`
+  and `call_tool`.
+- `SURFACES` from the package exports; `ALWAYS_ON` lists the free tools.
+
 ## [0.4.0] - 2026-10-19
 
 ### Added

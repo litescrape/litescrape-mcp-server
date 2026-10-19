@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { findSurface } from '../src/surfaces.js';
+import { SUMMARIES } from '../src/summaries.js';
 
 function summarize(
 	name: string,
 	payload: Record<string, unknown>,
 	args: Record<string, unknown> = {},
 ) {
-	const surface = findSurface(name);
-	if (!surface) throw new Error(`unknown surface ${name}`);
-	return surface.summarize(payload, args);
+	const summary = SUMMARIES[name];
+	if (!summary) throw new Error(`no summary for ${name}`);
+	return summary(payload, args);
 }
 
 describe('summaries', () => {
@@ -24,6 +24,7 @@ describe('summaries', () => {
 					organic_results: [1, 2, 3],
 					answer_box: {},
 					pagination: {},
+					submit_feedback_for_this_response_here: 'https://api.litescrape.com/api/feedback/1',
 				},
 				{ q: 'pizza' },
 			),

@@ -1,19 +1,36 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import {
+	CallToolRequestSchema,
+	ListToolsRequestSchema,
+	type CallToolResult,
+} from '@modelcontextprotocol/sdk/types.js';
 
 import {
 	LitescrapeClient,
 	LitescrapeError,
+	isRecord,
 	type KeylessAllowance,
 	type Params,
 	type Payload,
 } from './client.js';
+import { ALWAYS_ON } from './catalog.js';
 import { instructions, keyRequiredMessage } from './messages.js';
-import { SURFACES, type Surface } from './surfaces.js';
+import { summarize } from './summaries.js';
+import {
+	CALL_TOOL,
+	DEFAULT_FIND_LIMIT,
+	FIND_TOOLS,
+	findTools,
+	listed,
+	lookupTools,
+	MAX_FIND_LIMIT,
+	type CatalogTool,
+} from './tools.js';
 import { PACKAGE_NAME, VERSION } from './version.js';
 
+export { ALWAYS_ON } from './catalog.js';
 export { LitescrapeClient, LitescrapeError } from './client.js';
-export { SURFACES } from './surfaces.js';
+export type { CatalogTool } from './tools.js';
 
 // Error codes whose message already carries the "Fix:" line for the caller.
 const SELF_EXPLANATORY = new Set([
@@ -69,8 +86,8 @@ export function selectGroups(payload: Payload, groups: unknown): Payload {
 	return selected;
 }
 
-export function allowanceLine(surface: Surface, allowance: KeylessAllowance): string {
-	return `Free allowance: ${allowance.remaining} of ${allowance.limit} ${surface.name} calls left today (no API key set).`;
+export function allowanceLine(name: string, allowance: KeylessAllowance): string {
+	return `Free allowance: ${allowance.remaining} of ${allowance.limit} ${name} calls left today (no API key set).`;
 }
 
 export function formatError(error: LitescrapeError): string {
@@ -87,47 +104,129 @@ function textResult(text: string, structured?: Payload, isError = false): CallTo
 	return result;
 }
 
+/** Call one Litescrape endpoint and lead its unchanged JSON with a one-line summary. */
+async function run(
+	client: LitescrapeClient,
+	tool: CatalogTool,
+	args: Record<string, unknown>,
+): Promise<CallToolResult> {
+	if (!client.keyed && !tool.keyless) {
+		return textResult(keyRequiredMessage(tool.name), undefined, true);
+	}
+	const { payload, keyless } =
+		tool.method === 'POST' || needsBody(args)
+			? await client.post(tool.path, toBody(args))
+			: await client.get(tool.path, toParams(args));
+	const selected = selectGroups(payload, args.result_groups);
+	const line = summarize(tool.name, tool.title, payload, args);
+	const summary = keyless ? `${line} ${allowanceLine(tool.name, keyless)}` : line;
+	return textResult(
+		`${summary}
+
+${JSON.stringify(selected)}`,
+		selected,
+	);
+}
+
+/** A find result: the input schema only for the tools the caller is likely to run. */
+function found(tool: CatalogTool, withSchema: boolean): Payload {
+	const entry: Payload = {
+		name: tool.name,
+		title: tool.title,
+		description: tool.description,
+		keyless: tool.keyless,
+	};
+	if (withSchema) entry.input_schema = tool.input_schema;
+	return entry;
+}
+
+async function find(
+	client: LitescrapeClient,
+	args: Record<string, unknown>,
+): Promise<CallToolResult> {
+	const { q, names, limit = DEFAULT_FIND_LIMIT } = args;
+	if (Array.isArray(names) && names.length) {
+		if (!names.every((name) => typeof name === 'string' && name.trim())) {
+			return textResult('names must be a list of tool names.', undefined, true);
+		}
+		const tools = await lookupTools(
+			client,
+			names.map((name: string) => name.trim()),
+		);
+		const listedNames = tools.map((tool) => tool.name).join(', ');
+		const payload = { tools: tools.map((tool) => found(tool, true)) };
+		return textResult(
+			`Litescrape tools: ${listedNames}.
+
+${JSON.stringify(payload)}`,
+			payload,
+		);
+	}
+	if (typeof q !== 'string' || q.trim().length < 3) {
+		return textResult(
+			'Describe the task in q (at least 3 characters), or pass names.',
+			undefined,
+			true,
+		);
+	}
+	if (!Number.isInteger(limit) || (limit as number) < 1 || (limit as number) > MAX_FIND_LIMIT) {
+		return textResult(`limit must be an integer from 1 to ${MAX_FIND_LIMIT}.`, undefined, true);
+	}
+	const tools = await findTools(client, q.trim(), limit as number);
+	const payload = { tools: tools.map((tool) => found(tool, tool.best_match === true)) };
+	const listedNames = tools.length ? tools.map((tool) => tool.name).join(', ') : 'none';
+	return textResult(
+		`Litescrape tools for "${q.trim()}": ${listedNames}. Fetch a schema that is not shown with ` +
+			`find_tools names.
+
+${JSON.stringify(payload)}`,
+		payload,
+	);
+}
+
+/** Run a catalog tool by name, looking up its definition when this process has not seen it. */
+async function call(
+	client: LitescrapeClient,
+	name: unknown,
+	args: unknown,
+): Promise<CallToolResult> {
+	if (typeof name !== 'string' || !name.trim()) {
+		return textResult('Pass the name of a tool from find_tools.', undefined, true);
+	}
+	if (args !== undefined && !isRecord(args)) {
+		return textResult("arguments must be an object of the tool's parameters.", undefined, true);
+	}
+	const [tool] = await lookupTools(client, [name.trim()]);
+	if (!tool)
+		return textResult(`Unknown tool ${name}. Use find_tools to find one.`, undefined, true);
+	return run(client, tool, args ?? {});
+}
+
 export interface ServerOptions {
 	client: LitescrapeClient;
 }
 
-export function createServer({ client }: ServerOptions): McpServer {
-	const server = new McpServer(
+export function createServer({ client }: ServerOptions): Server {
+	const server = new Server(
 		{ name: PACKAGE_NAME, version: VERSION },
 		{ instructions: instructions(client.keyed), capabilities: { tools: {} } },
 	);
+	const tools = [...ALWAYS_ON.map(listed), FIND_TOOLS, CALL_TOOL];
 
-	for (const surface of SURFACES) {
-		server.registerTool(
-			surface.name,
-			{
-				title: surface.title,
-				description: surface.description,
-				inputSchema: surface.inputSchema,
-				annotations: { readOnlyHint: true, idempotentHint: false, openWorldHint: true },
-			},
-			async (args: Record<string, unknown>) => {
-				if (!client.keyed && !surface.keyless) {
-					return textResult(keyRequiredMessage(surface.name), undefined, true);
-				}
-				try {
-					const { payload, keyless } =
-						surface.post || needsBody(args)
-							? await client.post(surface.path, { ...toBody(args), ...surface.defaults })
-							: await client.get(surface.path, { ...toParams(args), ...surface.defaults });
-					const selected = selectGroups(payload, args.result_groups);
-					const summary = keyless
-						? `${surface.summarize(payload, args)} ${allowanceLine(surface, keyless)}`
-						: surface.summarize(payload, args);
-					return textResult(`${summary}\n\n${JSON.stringify(selected)}`, selected);
-				} catch (error) {
-					if (error instanceof LitescrapeError)
-						return textResult(formatError(error), undefined, true);
-					throw error;
-				}
-			},
-		);
-	}
+	server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools }));
+	server.setRequestHandler(CallToolRequestSchema, async (request) => {
+		const { name } = request.params;
+		const args = request.params.arguments ?? {};
+		try {
+			if (name === FIND_TOOLS.name) return await find(client, args);
+			if (name === CALL_TOOL.name) return await call(client, args.name, args.arguments);
+			// A listed tool, or a catalog tool called by name directly: both run the same way.
+			return await call(client, name, args);
+		} catch (error) {
+			if (error instanceof LitescrapeError) return textResult(formatError(error), undefined, true);
+			throw error;
+		}
+	});
 
 	return server;
 }

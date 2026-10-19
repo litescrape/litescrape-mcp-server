@@ -4,7 +4,7 @@ Instructions for AI agents (Cline, Claude Code, Cursor and similar) that set up 
 
 ## What this server is
 
-`litescrape-mcp-server` gives an assistant live search results from Google Search, Bing, DuckDuckGo and Google Maps through the Litescrape API. It works with **no API key and no account**: those four tools come from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps, one call at a time). Every other tool needs an API key, which also removes the limits: Google AI Mode, AI Overview, Shopping and Reviews, and the rest of the Litescrape catalog (other search engines, maps and reviews, app stores, retailers, real estate, job boards, social media and web page capture), 135 tools in all.
+`litescrape-mcp-server` gives an assistant live search results from Google Search, Bing, DuckDuckGo and Google Maps through the Litescrape API. It works with **no API key and no account**: those four tools come from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps, one call at a time). Every other tool needs an API key, which also removes the limits: Google AI Mode, AI Overview, Shopping and Reviews, and the rest of the Litescrape catalog (other search engines, maps and reviews, app stores, retailers, real estate, job boards, social media and web page capture), more than 130 tools in all. The server lists only the four free tools plus `find_tools` and `call_tool`; the rest are found and run through those two, so the tool list stays small.
 
 ## Requirements
 
@@ -60,10 +60,10 @@ Keys are created at https://litescrape.com. Other optional variables: `LITESCRAP
 
 ## Verify
 
-After the client restarts the server, list its tools; expect 140, including `search`, `google_search`, `bing_search`, `duckduckgo_search`, `google_maps`, `google_ai_overview`, `google_ai_mode`, `google_shopping`, `google_reviews`, `web_fetch`, `web_screenshot`, `amazon_product`, `tiktok_profile` and `zillow_search`. Then call `search` with `{"q": "model context protocol"}`. A working install returns a one-line summary followed by JSON, for example:
+After the client restarts the server, list its tools; expect six: `google_search`, `bing_search`, `duckduckgo_search`, `google_maps`, `find_tools` and `call_tool`. Then call `google_search` with `{"q": "model context protocol", "fast_mode": true}`. A working install returns a one-line summary followed by JSON, for example:
 
 ```
-Google Search (fast mode) for "model context protocol": 10 organic results. Free allowance: 24 of 25 google_search calls left today (no API key set).
+Google Search for "model context protocol": 10 organic results. Free allowance: 24 of 25 google_search calls left today (no API key set).
 
 {"search_metadata":{...},"organic_results":[...]}
 ```
