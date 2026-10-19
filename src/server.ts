@@ -35,6 +35,29 @@ export function toParams(args: Record<string, unknown>): Params {
 	return params;
 }
 
+/** The arguments as a JSON body: arrays and objects kept, result_groups and unset values dropped. */
+export function toBody(args: Record<string, unknown>): Payload {
+	const body: Payload = {};
+	for (const [key, value] of Object.entries(args)) {
+		if (value === undefined || value === null || key === 'result_groups') continue;
+		body[key] = value;
+	}
+	return body;
+}
+
+// Longer values (continuation tokens, long prompts) go in a JSON body rather than the URL.
+const MAX_QUERY_VALUE = 2048;
+
+/** True when an argument cannot travel in a GET query string: an array, an object or a long value. */
+export function needsBody(args: Record<string, unknown>): boolean {
+	return Object.entries(args).some(
+		([key, value]) =>
+			key !== 'result_groups' &&
+			((typeof value === 'object' && value !== null) ||
+				(typeof value === 'string' && value.length > MAX_QUERY_VALUE)),
+	);
+}
+
 export function selectGroups(payload: Payload, groups: unknown): Payload {
 	if (!Array.isArray(groups) || groups.length === 0) return payload;
 	const wanted = new Set(groups.filter((group): group is string => typeof group === 'string'));
@@ -87,9 +110,11 @@ export function createServer({ client }: ServerOptions): McpServer {
 				if (!client.keyed && !surface.keyless) {
 					return textResult(keyRequiredMessage(surface.name), undefined, true);
 				}
-				const params: Params = { ...toParams(args), ...surface.defaults };
 				try {
-					const { payload, keyless } = await client.get(surface.path, params);
+					const { payload, keyless } =
+						surface.post || needsBody(args)
+							? await client.post(surface.path, { ...toBody(args), ...surface.defaults })
+							: await client.get(surface.path, { ...toParams(args), ...surface.defaults });
 					const selected = selectGroups(payload, args.result_groups);
 					const summary = keyless
 						? `${surface.summarize(payload, args)} ${allowanceLine(surface, keyless)}`

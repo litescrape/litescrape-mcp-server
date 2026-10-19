@@ -107,9 +107,18 @@ export class LitescrapeClient {
 	}
 
 	async get(path: string, params: Params): Promise<ApiResult> {
+		return this.retrying(() => this.once(this.url(path, params), 'GET'));
+	}
+
+	/** JSON POST, for routes that only accept a body or arguments with arrays and objects. */
+	async post(path: string, body: Payload): Promise<ApiResult> {
+		return this.retrying(() => this.once(this.url(path, {}), 'POST', JSON.stringify(body)));
+	}
+
+	private async retrying(send: () => Promise<ApiResult>): Promise<ApiResult> {
 		for (let attempt = 0; ; attempt += 1) {
 			try {
-				return await this.once(path, params);
+				return await send();
 			} catch (error) {
 				if (!(error instanceof LitescrapeError) || !error.retryable || attempt >= MAX_RETRIES) {
 					throw error;
@@ -121,14 +130,17 @@ export class LitescrapeClient {
 		}
 	}
 
-	private async once(path: string, params: Params): Promise<ApiResult> {
+	private async once(url: string, method: 'GET' | 'POST', body?: string): Promise<ApiResult> {
 		const controller = new AbortController();
 		const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+		const headers = this.headers();
+		if (body !== undefined) headers['Content-Type'] = 'application/json';
 		let response: Response;
 		try {
-			response = await this.fetchImpl(this.url(path, params), {
-				method: 'GET',
-				headers: this.headers(),
+			response = await this.fetchImpl(url, {
+				method,
+				headers,
+				body,
 				signal: controller.signal,
 			});
 		} catch (error) {
@@ -154,10 +166,10 @@ export class LitescrapeClient {
 		}
 
 		const requestId = response.headers.get('x-request-id') ?? undefined;
-		const body = await response.text();
+		const raw = await response.text();
 		let parsed: unknown = null;
 		try {
-			parsed = body ? JSON.parse(body) : null;
+			parsed = raw ? JSON.parse(raw) : null;
 		} catch {
 			parsed = null;
 		}

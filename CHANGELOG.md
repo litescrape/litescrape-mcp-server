@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.4.0] - 2026-10-19
+
+### Added
+
+- A tool for every endpoint of the current Litescrape API, 130 new tools in
+  all, each named after its route (`/api/amazon/product` is `amazon_product`)
+  with that endpoint's parameters and limits: more Google (Images, Local,
+  Ads, Jobs, Gemini, Maps posts, photo metadata, popular times, contributor
+  reviews, Shopping product and merchant URLs, Play), Bing Images, Maps,
+  Shopping and Product, Brave, Baidu, Yandex, Naver, Yahoo, YouTube, the
+  Apple App Store and Apple Maps, DuckDuckGo Maps, Tripadvisor, Yelp, Airbnb,
+  Eventbrite, Copilot, Amazon, eBay and eleven more retailers, Zillow, Redfin,
+  Realtor.com, Apartments.com and Homes.com, Indeed, Glassdoor, Ashby,
+  ZipRecruiter and Levels.fyi, TikTok, Instagram, X and Facebook, and
+  `web_screenshot`. All of them need an API key; the free keyless tools are
+  unchanged.
+- `google_search` takes `page_token` (from `pagination.next_page_token`) for
+  the next page, and `google_reviews` takes `source_metadata`.
+- Arguments that a query string cannot carry (arrays, objects, values over
+  2,048 characters) and endpoints that accept only a body are sent as a JSON
+  `POST`. Everything else is still a `GET`.
+
+### Changed
+
+- `web_fetch` follows the current API: `respond_with` is `content` (default,
+  the main content as Markdown), `markdown`, `html`, `text`, `frontmatter` or
+  a `+` combination; `retain_links` and `retain_images` replace `with_links`
+  and `with_images`; `respond_timing` replaces `wait_until`; `with_iframe` is
+  `true`, `false` or `quoted`. New options include `engine`, `preset`,
+  `max_tokens`, `token_budget`, `markdown_chunking`, `set_cookies`,
+  `viewport` and `assert_status_code`. Screenshots moved to
+  `web_screenshot`.
+- The Google `radius` parameter accepts 1 to 1,000 meters (1 to 199 on
+  desktop), as the API does.
+
 ## [0.3.0] - 2026-09-22
 
 ### Added

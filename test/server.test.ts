@@ -8,7 +8,7 @@ import { ACCOUNT_FIX } from '../src/messages.js';
 import { createServer } from '../src/server.js';
 import { SURFACES } from '../src/surfaces.js';
 
-type Recorded = { url: URL; headers: Record<string, string> };
+type Recorded = { url: URL; method: string; headers: Record<string, string>; body?: unknown };
 
 function connected(options: {
 	apiKey?: string;
@@ -19,7 +19,9 @@ function connected(options: {
 	const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
 		recorded.push({
 			url: new URL(String(input)),
+			method: init?.method ?? 'GET',
 			headers: { ...(init?.headers as Record<string, string>) },
+			body: typeof init?.body === 'string' ? JSON.parse(init.body) : undefined,
 		});
 		const next = queue.shift();
 		if (!next) throw new Error('unexpected request');
@@ -287,11 +289,113 @@ describe('createServer', () => {
 		expect(recorded).toHaveLength(0);
 	});
 
+	it('serves the wider catalog with a key over GET for scalar arguments', async () => {
+		const payload = {
+			search_metadata: {},
+			search_parameters: {},
+			jobs_results: [{ title: 'Engineer' }, { title: 'Designer' }],
+			pagination: { next_page: 2, next_page_token: 'tok' },
+		};
+		const { call, text, recorded } = connected({
+			apiKey: 'ls_live_k',
+			responses: [[200, payload]],
+		});
+		const result = await call('glassdoor_search', { q: 'engineer', remote: true, page: 1 });
+		expect(result.isError).toBeFalsy();
+		expect(text(result).split('\n\n')[0]).toBe(
+			'Glassdoor for "engineer": 2 jobs; more pages available.',
+		);
+		const request = recorded[0];
+		expect(request?.method).toBe('GET');
+		expect(request?.url.pathname).toBe('/api/glassdoor/search');
+		expect(request?.url.searchParams.get('remote')).toBe('true');
+		expect(request?.url.searchParams.get('page')).toBe('1');
+		expect(request?.headers['X-Litescrape-Client']).toMatch(/^mcp\//);
+	});
+
+	it('sends array arguments as a JSON POST body', async () => {
+		const { call, recorded } = connected({
+			apiKey: 'ls_live_k',
+			responses: [[200, { search_metadata: {}, jobs_results: [] }]],
+		});
+		const result = await call('glassdoor_search', {
+			q: 'engineer',
+			company_sizes: [4, 5],
+			result_groups: ['jobs_results'],
+		});
+		expect(result.isError).toBeFalsy();
+		const request = recorded[0];
+		expect(request?.method).toBe('POST');
+		expect(request?.url.pathname).toBe('/api/glassdoor/search');
+		expect(request?.url.search).toBe('');
+		expect(request?.headers['Content-Type']).toBe('application/json');
+		expect(request?.headers['X-Litescrape-Client']).toMatch(/^mcp\//);
+		expect(request?.body).toEqual({ q: 'engineer', company_sizes: [4, 5] });
+	});
+
+	it('moves a value too long for a query string into a POST body', async () => {
+		const token = 'a'.repeat(3000);
+		const { call, recorded } = connected({
+			apiKey: 'ls_live_k',
+			responses: [[200, { search_metadata: {}, organic_results: [] }]],
+		});
+		await call('google_search', { page_token: token });
+		expect(recorded[0]?.method).toBe('POST');
+		expect(recorded[0]?.body).toEqual({ page_token: token });
+	});
+
+	it('always POSTs to a body-only route', async () => {
+		const payload = {
+			id: 'c1',
+			object: 'chat.completion',
+			choices: [{ index: 0, message: { role: 'assistant', content: 'Hello there' } }],
+			citations: [{ url: 'https://example.com' }],
+		};
+		const { call, text, recorded } = connected({
+			apiKey: 'ls_live_k',
+			responses: [[200, payload]],
+		});
+		const result = await call('copilot_chat_completions', {
+			messages: [{ role: 'user', content: 'Say hello' }],
+			country: 'US',
+		});
+		expect(result.isError).toBeFalsy();
+		expect(text(result).split('\n\n')[0]).toBe('Copilot answered: 11 characters, 1 citations.');
+		expect(recorded[0]?.method).toBe('POST');
+		expect(recorded[0]?.url.pathname).toBe('/api/copilot/chat/completions');
+		expect(recorded[0]?.body).toEqual({
+			messages: [{ role: 'user', content: 'Say hello' }],
+			country: 'US',
+		});
+	});
+
+	it('refuses catalog tools without a key before any request', async () => {
+		for (const [tool, args] of [
+			['amazon_product', { asin: 'B000000000' }],
+			['tiktok_profile', { handle: 'example' }],
+			['web_screenshot', { url: 'https://example.com' }],
+		] as const) {
+			const { call, text, recorded } = connected({ responses: [] });
+			const result = await call(tool, args);
+			expect(result.isError).toBe(true);
+			expect(text(result)).toContain(`${tool} needs a Litescrape API key`);
+			expect(recorded).toHaveLength(0);
+		}
+	});
+
+	it('rejects a web_fetch value outside the API options before any request', async () => {
+		const { call, recorded } = connected({ apiKey: 'ls_live_k', responses: [] });
+		const result = await call('web_fetch', { url: 'https://example.com', retain_links: 'inlined' });
+		expect(result.isError).toBe(true);
+		expect(recorded).toHaveLength(0);
+	});
+
 	it('sends extra client headers with every request', async () => {
 		const recorded: Recorded[] = [];
 		const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
 			recorded.push({
 				url: new URL(String(input)),
+				method: init?.method ?? 'GET',
 				headers: { ...(init?.headers as Record<string, string>) },
 			});
 			return new Response('{"search_metadata":{}}', {

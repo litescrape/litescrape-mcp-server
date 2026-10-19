@@ -82,6 +82,26 @@ describe('LitescrapeClient', () => {
 		expect(calls[0]?.headers.Authorization).toBeUndefined();
 	});
 
+	it('posts a JSON body with the same headers when asked to', async () => {
+		const seen: RequestInit[] = [];
+		const fetchImpl = (async (_input: string | URL | Request, init?: RequestInit) => {
+			seen.push(init ?? {});
+			return jsonResponse(200, { results: [] });
+		}) as typeof fetch;
+		const client = new LitescrapeClient({ apiKey: 'k', fetch: fetchImpl, sleep: noSleep });
+		const result = await client.post('/api/google/shopping/merchant-urls', {
+			products: [{ q: 'kettle' }],
+		});
+		expect(result.payload).toEqual({ results: [] });
+		const init = seen[0];
+		const headers = init?.headers as Record<string, string>;
+		expect(init?.method).toBe('POST');
+		expect(init?.body).toBe('{"products":[{"q":"kettle"}]}');
+		expect(headers['Content-Type']).toBe('application/json');
+		expect(headers['X-Litescrape-Client']).toBe(`mcp/${VERSION}`);
+		expect(headers.Authorization).toBe('Bearer k');
+	});
+
 	it('omits the allowance for keyed responses', async () => {
 		const { fetchImpl } = fakeFetch([jsonResponse(200, { organic_results: [] })]);
 		const client = new LitescrapeClient({ apiKey: 'k', fetch: fetchImpl, sleep: noSleep });
