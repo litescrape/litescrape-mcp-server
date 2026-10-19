@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { ALWAYS_ON } from '../src/catalog.js';
 import { KEYLESS_TOOLS } from '../src/messages.js';
-import { SURFACES } from '../src/surfaces.js';
+import { SUMMARIES } from '../src/summaries.js';
+
+const toolName = (route: string) => route.replace(/^\//, '').replace(/[/-]/g, '_');
 
 // Every route the Litescrape API serves (api/documentation.json in the backend), sorted.
 const API_ROUTES = [
@@ -147,33 +150,26 @@ const API_ROUTES = [
 ];
 
 describe('catalog', () => {
-	it('has one tool for every API route and no tool for a route the API does not serve', () => {
-		const paths = new Set(SURFACES.map((surface) => surface.path.replace(/^\/api/, '')));
-		expect([...paths].sort()).toEqual(API_ROUTES);
+	it('summarizes every API route and nothing the API does not serve', () => {
+		expect(Object.keys(SUMMARIES).sort()).toEqual(API_ROUTES.map(toolName).sort());
 	});
 
-	it('names each tool after its route, uniquely, within the MCP name limits', () => {
-		const names = SURFACES.map((surface) => surface.name);
-		expect(new Set(names).size).toBe(names.length);
-		for (const surface of SURFACES) {
-			expect(surface.name).toMatch(/^[a-z0-9_]{1,64}$/);
-			if (surface.name === 'search') continue;
-			expect(surface.name).toBe(surface.path.replace(/^\/api\//, '').replace(/[/-]/g, '_'));
-		}
-	});
-
-	it('serves only the free routes without a key and says so in every other description', () => {
-		const keyless = SURFACES.filter((surface) => surface.keyless).map((surface) => surface.name);
-		expect(keyless.sort()).toEqual([...KEYLESS_TOOLS, 'search'].sort());
-		for (const surface of SURFACES.filter((surface) => !surface.keyless)) {
-			expect(surface.description).toMatch(/Requires an API key\.$/);
-		}
-	});
-
-	it('offers result_groups on every tool except the web page tools', () => {
-		for (const surface of SURFACES) {
-			const expected = !['web_fetch', 'web_screenshot'].includes(surface.name);
-			expect(Object.hasOwn(surface.inputSchema, 'result_groups')).toBe(expected);
+	it('lists exactly the free tools, generated from the API catalog', () => {
+		expect(ALWAYS_ON.map((tool) => tool.name)).toEqual(KEYLESS_TOOLS);
+		expect([...KEYLESS_TOOLS].sort()).toEqual([
+			'bing_search',
+			'duckduckgo_search',
+			'google_maps',
+			'google_search',
+		]);
+		for (const tool of ALWAYS_ON) {
+			expect(tool.keyless).toBe(true);
+			expect(tool.name).toBe(toolName(tool.path.replace(/^\/api/, '')));
+			expect(tool.name).toMatch(/^[a-z0-9_]{1,64}$/);
+			expect(tool.description.length).toBeGreaterThan(0);
+			expect(['GET', 'POST']).toContain(tool.method);
+			expect(tool.input_schema.type).toBe('object');
+			expect(tool.input_schema).toHaveProperty('properties');
 		}
 	});
 });

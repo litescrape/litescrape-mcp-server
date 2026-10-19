@@ -2,9 +2,9 @@
 	"manifest_version": "0.3",
 	"name": "litescrape-mcp-server",
 	"display_name": "Litescrape",
-	"version": "0.4.0",
-	"description": "Google, Bing, DuckDuckGo and Google Maps free without an API key, plus 135 more tools with one.",
-	"long_description": "Live search results straight from Google Search, Bing, DuckDuckGo and Google Maps as structured JSON, through the Litescrape API. Works with no API key and no account from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps). Add a Litescrape API key for every other Litescrape endpoint, each its own tool: Google AI Mode, AI Overview, Shopping, Reviews, Images, Jobs, Play and Maps details; Brave, Yandex, Baidu, Naver and Yahoo; YouTube; the Apple App Store and Apple Maps; Tripadvisor, Yelp and Airbnb; Amazon, eBay and other retailers; Zillow, Redfin and other real-estate sites; Indeed, Glassdoor and other job boards; TikTok, Instagram, X and Facebook; Copilot and Gemini answers; and web page capture as Markdown or a screenshot. A key also lifts every limit. Every tool returns the API's JSON unchanged after a one-line summary; result_groups keeps only the groups you need.",
+	"version": "0.5.0",
+	"description": "Google, Bing, DuckDuckGo and Google Maps free without an API key, plus 130+ more tools found on demand.",
+	"long_description": "Live search results straight from Google Search, Bing, DuckDuckGo and Google Maps as structured JSON, through the Litescrape API. Works with no API key and no account from a free daily allowance per network (25 Google Search calls, 50 each for Bing, DuckDuckGo and Google Maps). Add a Litescrape API key for every other Litescrape endpoint, found with find_tools and run with call_tool so the tool list stays small: Google AI Mode, AI Overview, Shopping, Reviews, Images, Jobs, Play and Maps details; Brave, Yandex, Baidu, Naver and Yahoo; YouTube; the Apple App Store and Apple Maps; Tripadvisor, Yelp and Airbnb; Amazon, eBay and other retailers; Zillow, Redfin and other real-estate sites; Indeed, Glassdoor and other job boards; TikTok, Instagram, X and Facebook; Copilot and Gemini answers; and web page capture as Markdown or a screenshot. A key also lifts every limit. Every tool returns the API's JSON unchanged after a one-line summary; result_groups keeps only the groups you need.",
 	"author": {
 		"name": "Litescrape",
 		"email": "support@litescrape.com",

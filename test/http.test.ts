@@ -78,7 +78,7 @@ describe('Streamable HTTP mode', () => {
 		try {
 			expect(client.getInstructions()).toContain('no Litescrape API key');
 			const { tools } = await client.listTools();
-			expect(tools.map((tool) => tool.name)).toContain('google_reviews');
+			expect(tools.map((tool) => tool.name)).toContain('find_tools');
 			const result = (await client.callTool({
 				name: 'google_search',
 				arguments: { q: 'x' },
@@ -156,7 +156,7 @@ describe('Streamable HTTP mode', () => {
 		const bearer = await connect(`${origin}/mcp`, { Authorization: 'Bearer ls_live_k' });
 		try {
 			expect(bearer.getInstructions()).toContain('authenticated with a Litescrape API key');
-			await bearer.callTool({ name: 'google_ai_overview', arguments: { q: 'x' } });
+			await bearer.callTool({ name: 'bing_search', arguments: { q: 'x' } });
 		} finally {
 			await bearer.close();
 		}
@@ -170,6 +170,6 @@ describe('Streamable HTTP mode', () => {
 			'Bearer ls_live_k',
 			'Bearer ls_live_q',
 		]);
-		expect(recorded[0]?.url.pathname).toBe('/api/google/ai-overview');
+		expect(recorded[0]?.url.pathname).toBe('/api/bing/search');
 	});
 });

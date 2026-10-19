@@ -1,6 +1,6 @@
 {
 	"name": "litescrape-mcp-server",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"description": "MCP server for the Litescrape API: Google Search, Bing, DuckDuckGo and Google Maps free without an API key, plus every other Litescrape endpoint (AI answers, maps and reviews, app stores, retailers, real estate, jobs, social media, web pages) with one. Stdio or Streamable HTTP.",
 	"license": "MIT",
 	"homepage": "https://litescrape.com",
@@ -62,6 +62,7 @@
 		"lint": "npm run format:check && npm run typecheck",
 		"dev": "tsx src/index.ts",
 		"inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
+		"catalog": "node scripts/catalog.mjs && prettier --write src/catalog.ts",
 		"prepublishOnly": "npm run lint && npm run test && npm run build"
 	},
 	"publishConfig": {
