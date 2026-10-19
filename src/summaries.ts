@@ -7,10 +7,11 @@ function count(payload: Payload, key: string): number | undefined {
 	return Array.isArray(value) ? value.length : undefined;
 }
 
+// Fields on every response that describe the request rather than its results.
+const METADATA = ['search_metadata', 'search_parameters', 'submit_feedback_for_this_response_here'];
+
 function presentGroups(payload: Payload, skip: string[]): string[] {
-	return Object.keys(payload).filter(
-		(key) => !skip.includes(key) && key !== 'search_metadata' && key !== 'search_parameters',
-	);
+	return Object.keys(payload).filter((key) => !skip.includes(key) && !METADATA.includes(key));
 }
 
 function quoted(args: Record<string, unknown>, key: string | null = 'q'): string {

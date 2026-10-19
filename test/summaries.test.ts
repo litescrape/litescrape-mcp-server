@@ -24,6 +24,7 @@ describe('summaries', () => {
 					organic_results: [1, 2, 3],
 					answer_box: {},
 					pagination: {},
+					submit_feedback_for_this_response_here: 'https://api.litescrape.com/api/feedback/1',
 				},
 				{ q: 'pizza' },
 			),

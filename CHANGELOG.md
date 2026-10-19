@@ -13,6 +13,7 @@
   in this package. `npm run catalog` regenerates the free tools.
 - Arguments are validated by the API, which reports the argument at fault;
   failed calls are not charged.
+- Result summaries no longer list the API's feedback link as a result group.
 
 ### Added
 
